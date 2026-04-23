@@ -1,7 +1,9 @@
 let bg;
 let timeLeft = 60;
-let score = 0
-let game = "play"
+let customerStars = 0;
+let game = "play";
+let packageStatus = ""
+let packageStatusTimer = 0
 
 let player = {
     x: 100,
@@ -11,6 +13,7 @@ let player = {
     inventory: {}
 }
 
+
 //add more
 let supplies = [
     {
@@ -18,8 +21,27 @@ let supplies = [
         y: 200,
         size: 30,
         type: "paints"
-    }
+    },
+    {
+        x: 300,
+        y: 180,
+        size: 20,
+        type: "yarn"
+    },
+    {
+        x: 250,
+        y: 300,
+        size: 30,
+        type: "sketchbooks"
+    },
+    {
+        x: 500,
+        y: 500,
+        size: 40,
+        type: "glitter"
+    },
 ]
+
 
 //add more
 let order = [
@@ -30,43 +52,56 @@ let order = [
         yarn: 5,
         paints:2,
         sketchbooks:1
-    }
+    },
+    {
+        yarn: 4,
+        sketchbooks:1
+    },
+    {
+        glitter: 2,
+        sketchbooks:1
+    },
 ]
+
 
 //fix positioning
 let deliveryStations = [
     {
-        x: 370,
-        y:110,
-        size: 50
+        x: 395,
+        y:150,
+        size: 60
     },
     {
-        x: 161,
-        y:102,
-        size: 30
+        x: 175,
+        y:150,
+        size: 60
     },
     {
-        x: 206,
-        y:102,
-        size: 30
+        x: 245,
+        y:150,
+        size: 60
     },
     {
-        x: 255,
-        y:102,
-        size: 30
+        x: 320,
+        y:150,
+        size: 60
     }
 ]
 
+
 let curentOrders;
+
 
 function preload(){
     bg = loadImage("Images/compSciBg.png")
 }
 
+
 function setup(){
     createCanvas(600,600);
     curentOrders = random(order);
 }
+
 
 function draw(){
     image(bg, 0,0,600,600);
@@ -87,98 +122,112 @@ function draw(){
     }
 }
 
+
 function drawPlayer(){
     fill(0);
     circle(player.x,player.y, player.size);
 }
 
+
 function playerMove(){
     if (keyIsDown(LEFT_ARROW) && player.x > 40){
         player.x -= player.speed;
-    }
-
-    if(keyIsDown(RIGHT_ARROW) && player.x < 560){
+    } else if(keyIsDown(RIGHT_ARROW) && player.x < 560){
         player.x += player.speed;
-    }
-
-    if(keyIsDown(DOWN_ARROW) && player.y < 500){
+    } else if(keyIsDown(DOWN_ARROW) && player.y < 500){
         player.y += player.speed;
-    }
-
-    if(keyIsDown(UP_ARROW) && player.y > 165){
+    } else if(keyIsDown(UP_ARROW) && player.y > 165){
         player.y -= player.speed;
     }
 }
+
 
 function drawSupplies(){
     for(let i = 0; i < supplies.length; i++){
         if(supplies[i].type === "paints"){
             fill("Purple");
+        }else if(supplies[i].type === "yarn"){
+            fill("green");
+        }else if(supplies[i].type === "sketchbooks"){
+            fill("pink");
+        }else if(supplies[i].type === 'glitter'){
+            fill("blue");
         }
-
         circle(supplies[i].x, supplies[i].y, supplies[i].size);
     }
 }
 
+
 function pickupCheck(){
     for(let i = 0; i < supplies.length; i++){
         let d = dist(player.x, player.y, supplies[i].x, supplies[i].y);
-        
-        if (d < 20){
+       
+        if (d < 30){
             let type = supplies[i].type;
+
 
             if(!player.inventory[type]){
                 player.inventory[type] = 0;
             }
 
+
             player.inventory[type]++;
-            
+           
             supplies[i].x = random(60, 540);
             supplies[i].y = random(170, 480);
         }
     }
 }
 
+
 function inventoryText(){
     fill("white");
-    textSize(30);
+    textSize(15);
     //update with each added item
-    text("Paints: " + (player.inventory.paints || 0), 420, 580)
-    text("Yarn: " + (player.inventory.yarn || 0), 420, 580)
+    text("Paints: " + (player.inventory.paints || 0), 420, 540)
+    text("Yarn: " + (player.inventory.yarn || 0), 420, 555)
+    text("Sketchbooks: " + (player.inventory.sketchbooks || 0), 420, 570)
+    text("Glitter: " + (player.inventory.glitter || 0), 420, 585)
 }
+
 
 function timer(){
     if (frameCount % 60 == 0 && timeLeft > 0) {
         timeLeft --;
     }
+    
     if(timeLeft >= 0){
         fill("white");
         textSize(20);
-        text("Time Left: " + timeLeft, 20, 300);
-    }
-    if (timeLeft <= 0) {
+        text("Time Left: " + timeLeft, 20, 550);
+        text("Stars: " + customerStars, 20, 580);
+    } else if (timeLeft <= 0) {
         game = "gameover"
     }
 }
 
+
 function checkOrders(){
     let items = Object.keys(curentOrders);
+
 
     for(let i = 0; i < items.length; i++){
         let item = items[i];
         let held = player.inventory[item] || 0;
         let need = curentOrders[item];
 
+
         if (need > held){
             return false;
         }
     }
-
     return true;
 }
 
+
 function dropOff(){
-    fill("orange");
+    fill(0,0,0,0);
+    strokeWeight(0);
     for(let i = 0; i < deliveryStations.length; i++){
         let stat = deliveryStations[i];
         rectMode(CENTER);
@@ -186,10 +235,12 @@ function dropOff(){
     }
 }
 
+
 function withinStation(){
     for(let i = 0; i < deliveryStations.length; i++){
         let stat = deliveryStations[i];
         let d = dist(player.x, player.y, stat.x, stat.y);
+
 
         if(d < stat.size/2){
             return true;
@@ -198,23 +249,25 @@ function withinStation(){
     return false;
 }
 
-function keyPressed(){
+
+function keyReleased(){
     if(key === 'd'){
         deliverOrder();
     }
 
-    if (key === 'p'){
-        //pause timer & stop game
-    }
+
 }
+
 
 function stationKey(){
     if(withinStation()){
         fill("white");
         textSize(16);
-        text("Press d to Deliver", player.x - 20, player.y -20);
+        textAlign(CENTER);
+        text("Press d to Deliver", player.x, player.y -20);
     }
 }
+
 
 function deliverOrder(){
     if(!withinStation()){
@@ -222,29 +275,37 @@ function deliverOrder(){
     }
 
     if(checkOrders()){
-        console.log("Correct Package!");
-        score += 10;
-        //add score amount;
+        customerStars += 5;
         player.inventory = {};
         curentOrders = random(order);
+
+        fill("green");
+        packageStatus = "Correct Package! + 10";
+        packageStatusTimer = 1;
     }else{
-        console.log("Wrong Package!");
+        fill("red");
+        customerStars -= 2;
+        packageStatus = "Wrong Package :( - 2";
+        packageStatusTimer = 1;
     }
 }
+
 
 function readyOrNot(){
     if(withinStation()){
         if(checkOrders()){
             fill("green");
             textSize(12);
-            text("Ready for Delivery ", player.x -20, player.y -20);
+            textAlign(CENTER);
+            text("Ready for Delivery ", player.x, player.y);
         }else{
             fill("red");
             textSize(12);
-            text("Wrong Order or Items", player.x - 20, player.y -20);
+            text("Not Ready", player.x, player.y);
         }
     }
 }
+
 
 function checkForGameOver(){
     if(game === "gameover"){
@@ -253,16 +314,23 @@ function checkForGameOver(){
     }
 }
 
+
 function drawGameOver(){
     fill("white");
     textAlign(CENTER, CENTER);
     textSize(70);
-    text("Game Over", width/2, height/2);
+    text("Time Up!", width/2, height/2);
     textSize(30);
-    text("Score: " + score, width/2, height/2 - 20);
+    text("Stars: " + customerStars, width/2, height/2 - 80);
     textSize(30);
-    text("Restart? ", width/2, height /2 + 20);
+    fill("green");
+    rect(width/2, height/2 + 80, 130, 40);
+    fill("white");
+
+
+    text("Restart? ", width/2, height /2 + 80);
 }
+
 
 function mousePressed(){
     if (game === "gameover"){
@@ -270,38 +338,48 @@ function mousePressed(){
     }
 }
 
+
 function restartGame(){
     game = "play";
     timeLeft = 60;
-    score = 0;
+    customerStars = 0;
     player.inventory = {};
+
 
     curentOrders = random(order);
 }
 
+
 function drawOrders(){
-    fill("white");
-    textSize(12);
+    fill(225, 225, 225,150);
+    strokeWeight(3);
+    rectMode(CORNER);
+    rect(15, 5,150,80); 
+    fill("black"); 
+    textSize(15);
     textAlign(LEFT, BASELINE);
     text("Order: ", 20, 20); //change values
     let items = Object.keys(curentOrders);
-    
+   
     for(let i = 0; i < items.length; i++){
         let item = items[i];
         let amount = curentOrders[item];
 
-        text(item + " x " + amount, 40, 40 + i * 10); //change values
+
+        text(item + " x " + amount, 40, 40 + i * 15); //change values
     }
 }
 
+
 /* THURSDAY:
-    - fix positionings
-    - timer fixing issues
+    - fix delivery issue (correct amount of order current says wrong)  -> does count & gives points
     - quick notes on functions (+ order them better)
-    - add more items + colors + orders
-    - fix restart button
-    - order box
-    - show score
+    - add more items + colors + orders --> create items?
+    - order box -> add more for multiple orders at once
     - power ups and stuff
     - add sounds and character
+    - fix restart button --> add only click within rectange?
+    - figure out why I couldn't push content into github 
+    - customer ratings + something that affects??
 */
+
