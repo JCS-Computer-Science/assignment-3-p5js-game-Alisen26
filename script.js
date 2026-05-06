@@ -4,7 +4,7 @@ let customerStars = 0;
 let game = "play";
 let packageStatus = ""
 let curentOrders;
-let event = "none";
+let currentEvent = "none";
 let eventTimer = 0;
 let eventCountDown = 15;
 let reverseControls = false;
@@ -49,60 +49,74 @@ let supplies = [
 //update whether urgent or not
 let orders = [
     {
-        paints: 2
+        paints: 2,
+        urgent: false
     },
     {
-        glitter: 3
+        glitter: 3,
+        urgent: false
     },
     {
-        sketchbooks: 2
+        sketchbooks: 2,
+        urgent: false
     },
     {
-        yarn: 3
+        yarn: 3,
+        urgent: false
     },
     {
         yarn: 4,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: false
     },
     {
         glitter: 2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: false
     },
     {
         paints: 3,
-        sketchbooks:3
+        sketchbooks:3,
+        urgent: false
     },
     {
         glitter: 2,
-        yarn:3
+        yarn:3,
+        urgent: false
     },
     {
         paints: 4,
-        yarn:1
+        yarn:1,
+        urgent: false
     },
     {
         paints: 2,
-        glitter:1
+        glitter:1,
+        urgent: false
     },
     {
         yarn: 4,
         paints:2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: false
     },
     {
         glitter: 1,
         paints:2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: false
     },
     {
         glitter: 2,
         yarn:2,
-        sketchbooks:2
+        sketchbooks:2,
+        urgent: false
     },
     {
         yarn: 2,
         paints:1,
-        glitter:1
+        glitter:1,
+        urgent: false
     }
 ]
 
@@ -112,57 +126,70 @@ let urgentOrder = [
         urgent: true
     },
     {
-        glitter: 3
+        glitter: 3,
+        urgent: true
     },
     {
-        sketchbooks: 2
+        sketchbooks: 2,
+        urgent: true
     },
     {
-        yarn: 3
+        yarn: 3,
+        urgent: true
     },
     {
         yarn: 4,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: true
     },
     {
         glitter: 2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: true
     },
     {
         paints: 3,
-        sketchbooks:3
+        sketchbooks:3,
+        urgent: true
     },
     {
         glitter: 2,
-        yarn:3
+        yarn:3,
+        urgent: true
     },
     {
         paints: 4,
-        yarn:1
+        yarn:1,
+        urgent: true
     },
     {
         paints: 2,
-        glitter:1
+        glitter:1,
+        urgent: true
     },
     {
         yarn: 4,
         paints:2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: true
     },
     {
         glitter: 1,
         paints:2,
-        sketchbooks:1
+        sketchbooks:1,
+        urgent: true
     },
     {
         glitter: 2,
         yarn:2,
-        sketchbooks:2
+        sketchbooks:2,
+        urgent: true
     },
     {
         yarn: 2,
         paints:1,
-        glitter:1
+        glitter:1,
+        urgent: true
     }
 ]
 
@@ -190,6 +217,8 @@ let deliveryStations = [
     }
 ]
 
+let 
+
 let block = [
     {
         x: 500,
@@ -214,8 +243,8 @@ function preload(){
 }
 
 function setup(){
-    createCanvas(600,600);
-    curentOrders = makeOrder;
+    createCanvas(800,600);
+    curentOrders = [makeOrder(),makeOrder(),makeOrder()];
 }
 
 function draw(){
@@ -234,6 +263,7 @@ function draw(){
         readyOrNot();
         beginEvent();
         playEvent();
+        drawGlitterFilter();
         checkForGameOver();
     }else{
         drawGameOver();
@@ -246,22 +276,34 @@ function drawPlayer(){
 }
 
 function playerMove(){
-    if (keyIsDown(LEFT_ARROW) && player.x > 40){
-        player.x -= player.speed;
+    if(reverseControls){
+        if(keyIsDown(LEFT_ARROW) && player.x < 560){
+            player.x += player.speed;
+        }
+        if(keyIsDown(RIGHT_ARROW) && player.x > 40){
+            player.x -= player.speed;
+        }
+        if(keyIsDown(UP_ARROW) && player.y < 500){
+            player.y += player.speed;
+        }
+        if(keyIsDown(DOWN_ARROW) && player.y > 165){
+            player.y -= player.speed;
+        }
+    }else{
+        if (keyIsDown(LEFT_ARROW) && player.x > 40){
+            player.x -= player.speed;
+        }
+        if(keyIsDown(RIGHT_ARROW) && player.x < 560){
+            player.x += player.speed;
+        }
+        if(keyIsDown(DOWN_ARROW) && player.y < 500){
+            player.y += player.speed;
+        }
+        if(keyIsDown(UP_ARROW) && player.y > 165){
+            player.y -= player.speed;
+        }
     }
-    if(keyIsDown(RIGHT_ARROW) && player.x < 560){
-        player.x += player.speed;
-    }
-    if(keyIsDown(DOWN_ARROW) && player.y < 500){
-        player.y += player.speed;
-    }
-    if(keyIsDown(UP_ARROW) && player.y > 165){
-        player.y -= player.speed;
-    }
-
-    if(reverseControls === true){
-        //left = right & so forth (do)
-    }
+    
 }
 
 function drawSupplies(){
@@ -283,7 +325,7 @@ function drawSupplies(){
 function pickupCheck(){
     for(let i = 0; i < supplies.length; i++){
         let d = dist(player.x, player.y, supplies[i].x, supplies[i].y);
-       
+
         if(d < 30){
             let type = supplies[i].type;
 
@@ -314,6 +356,11 @@ function inventoryText(){
 function timer(){
     if (frameCount % 60 == 0 && timeLeft > 0) {
         timeLeft --;
+        if(currentEvent !== "none"){
+            eventTimer--;
+        }else{
+            eventCountDown--;
+        }
     }
    
     if(timeLeft >= 0){
@@ -324,15 +371,16 @@ function timer(){
     }else if(timeLeft <= 0) {
         game = "gameover"
     }
+
 }
 
-function checkOrders(){
-    let items = Object.keys(curentOrders);
+function checkOrders(orderTypes){
+    let items = Object.keys(orderTypes);
 
     for(let i = 0; i < items.length; i++){
         let item = items[i];
         let held = player.inventory[item] || 0;
-        let need = curentOrders[item];
+        let need = orderTypes[item];
         if(need > held){
             return false;
         }
@@ -384,44 +432,59 @@ function stationKey(){
 
 //Needs to be fixed
 function deliverOrder(){
-    if(withinStation()){
-        if(checkOrders()){
+    if(!withinStation()){
+        return;
+    }
+
+    let delivered = false;
+
+    for(let i = 0; i < curentOrders.length; i++){
+        if(checkOrders(curentOrders[i])){
             customerStars += 5;
+            curentOrders.splice(i,1);
+            curentOrders.push(makeOrder());
             player.inventory = {};
-            curentOrders = random(order);
-   
-            fill("green");
+            
+            delivered = true;
             packageStatus = "correct";
             if(packageStatus === "correct"){
+                fill("green");
                 textSize(12);
                 text("Correct Package! +" + customerStars, player.x, player.y -20);
             }
-        }else{
-            fill("red");
-            if(customerStars > 0){
-                customerStars -= 2;
-            }
-            packageStatus = "Wrong Package :( - 2";
-            packageStatusTimer = 1;
+
+            return;
         }
-    }else{
-        return;
+
+    }
+
+    if(!delivered){
+        if(customerStars > 0){
+            fill("red");
+            textSize(12);
+            customerStars -= 2;
+            text("Wrong Package :( - 2", player.x, player.y -20);
+        }
     }
 }
 
 function readyOrNot(){
-    if(withinStation()){
-        if(checkOrders()){
+    if(!withinStation()){
+        return;
+    }
+
+    for(let i = 0; i < curentOrders.length; i++){
+        if(checkOrders(curentOrders[i])){
             fill("green");
             textSize(12);
             textAlign(CENTER);
             text("Ready for Delivery", player.x, player.y);
-        }else{
-            fill("red");
-            textSize(12);
-            text("Not Ready for Delivery", player.x, player.y);
+            return;
         }
     }
+    fill("red");
+    textSize(12);
+    text("Not Ready for Delivery", player.x, player.y);
 }
 
 function checkForGameOver(){
@@ -456,24 +519,36 @@ function restartGame(){
     timeLeft = 60;
     customerStars = 0;
     player.inventory = {};
-    curentOrders = random(order);
+    curentOrders = [makeOrder(),makeOrder(),makeOrder()];
 }
 
 function drawOrders(){
-    fill(225, 225, 225,150);
-    strokeWeight(3);
-    rectMode(CORNER);
-    rect(15, 5,150,80);
-    fill("black");
-    textSize(15);
-    textAlign(LEFT, BASELINE);
-    text("Order: ", 20, 20);
-    let items = Object.keys(curentOrders);
-   
-    for(let i = 0; i < items.length; i++){
-        let item = items[i];
-        let amount = curentOrders[item];
-        text(item + " x " + amount, 40, 40 + i * 15);
+    for(let i = 0; i < curentOrders.length; i++){
+        let orderTypes = curentOrders[i];
+        
+        fill(225, 225, 225,150);
+        strokeWeight(3);
+        rectMode(CORNER);
+        rect(610, 5 + i *85,150,80);
+        fill("black");
+        textSize(15);
+        textAlign(LEFT, BASELINE);
+        text("Order: ", 620, 20 + i * 85);
+
+        let items = Object.keys(orderTypes);
+       
+        if(orderTypes.urgent){
+            fill("red")
+            text("Urgent!", 700, 10, i * 85)
+            fill("black");
+        }
+        for(let j = 0; j < items.length; j++){
+            let item = items[j];
+            let amount = orderTypes[item];
+            if(item === "urgent")continue;
+            text(item + " x " + amount, 620, 40 + j * 15 + i * 85);
+            text("Time: " + orderTypes.timeLeft, 620, 70 + i*85);
+        }
     }
 }
 
@@ -481,66 +556,53 @@ function makeOrder(){
     let typeOrder = random(["orders", "urgentOrder"]);
 
     if(typeOrder === "urgentOrder"){
-        return{
-            items: urgentOrder,
-            urgent: true
-        }
+        return random(urgentOrder);
     }else{
-        return{
-            items: orders,
-            urgent: false
-        }
+        return random(orders);
     }
 }
 
 function beginEvent(){
-    
-    if(event === "none"){
-        eventCountDown--; 
-        
-        if(eventCountDown <= 0){
-            let possibleEvent = ["paintSpill", "yarnTanged", "glitterBoom"];
-            event = random(possibleEvent);
-            eventTimer = 10;
-            eventCountDown = 15;
-        }
+    if(currentEvent === "none" && eventCountDown <=0){        
+        let possibleEvent = ["paintSpill", "yarnTangled", "glitterBoom"];
+        currentEvent = random(possibleEvent);
+        eventTimer = 10;
+        eventCountDown = 15;
     }
     
-    if(event !== "none"){
+    if(currentEvent !== "none"){
         fill("yellow");
         textSize(20);
-        textAlign(CENTER);
-        text("Event: " + event, 20, 520);
+        textAlign(LEFT);
+        text("Event: " + currentEvent, 40, 520);
     }
 }
 
 function playEvent(){
-    if(event !== "none"){
-        eventTimer--;
-    }
     
-    if (event === "yarnTanged"){
+    if (currentEvent === "yarnTangled"){
         reverseControls = true;
-    }else if (event === "paintSpill"){
+    }else if (currentEvent=== "paintSpill"){
         player.speed = 1;
-    }else if (event === "glitterBoom"){
-        glitterFilter();
+    }else if (currentEvent === "glitterBoom"){
+        if(glitterCover === 0){
+            glitterCover += 20;
+        }
     }
     
-    if(eventTimer <= 0 && event !== "none"){
-        event = "none";
+    if(eventTimer <= 0 && currentEvent !== "none"){
+        currentEvent = "none";
         player.speed = 3;
         reverseControls = false;
     }
 }
 
-function glitterFilter(){
+function drawGlitterFilter(){
     if(glitterCover > 0){
         fill(255, 192, 203, 80);
-        rectMode(CORNER);
-        rect(0,0,width,height);
-        glitterCover--;
+        circle(random(width), random(height), random(5,15));
     }
+    glitterCover--;
 }
 
 
